@@ -16,6 +16,8 @@ all : $(TARGET)
 $(OBJ) : $(SRC)
 
 
+allclean :
+	$(RM) $(TARGET) $(OBJ) *.wav *.stackdump *~
 clean :
 	$(RM) $(TARGET) $(OBJ)
 objclean :

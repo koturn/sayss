@@ -49,6 +49,9 @@ all : $(TARGET)
 $(TARGET) : $(OBJ)
 
 
+.PHONY : allclean
+allclean :
+	$(RM) $(TARGET) $(OBJ) *.wav *.stackdump *~
 .PHONY : clean
 clean :
 	$(RM) $(TARGET) $(OBJ)
