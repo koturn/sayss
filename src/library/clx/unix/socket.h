@@ -84,7 +84,7 @@ namespace clx {
 	inline void assign_sockaddr(struct sockaddr_in& dest, int family, const in_addr& ipaddr, int port) {
 		std::memset(&dest, 0, sizeof(dest));
 		dest.sin_family = family;
-		dest.sin_port = ::htons(port);
+		dest.sin_port = htons(port);
 		std::memcpy((char*)&dest.sin_addr, &ipaddr, sizeof(ipaddr));
 	}
 	
@@ -94,8 +94,8 @@ namespace clx {
 	inline void assign_sockaddr(struct sockaddr_in& dest, int family, int port) {
 			std::memset((char*)&dest, 0, sizeof(dest));
 			dest.sin_family = family;
-			dest.sin_port = ::htons(port);
-			dest.sin_addr.s_addr = ::htonl(INADDR_ANY);
+			dest.sin_port = htons(port);
+			dest.sin_addr.s_addr = htonl(INADDR_ANY);
 	}
 }
 

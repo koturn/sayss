@@ -125,7 +125,7 @@ namespace clx {
 		
 		basic_sockaddress& assign(const char_type* host, int port, int n = 0) {
 			struct in_addr tmp;
-			if (!::inet_aton(host, &tmp)) {
+			if (!inet_aton(host, &tmp)) {
 				basic_resolver<Family> inet;
 				inet.lookup(host);
 				if (inet.addresses().empty()) throw sockaddress_error(host);
@@ -141,11 +141,11 @@ namespace clx {
 		
 		// get information about socket address
 		string_type ipaddr() const {
-			string_type tmp(::inet_ntoa(addr_.sin_addr));
+			string_type tmp(inet_ntoa(addr_.sin_addr));
 			return tmp;
 		}
 		
-		int port() const { return ::ntohs(addr_.sin_port); }
+		int port() const { return ntohs(addr_.sin_port); }
 		size_type size() const { return sizeof(addr_); }
 		const inet_type* data() const { return &addr_; }
 		
