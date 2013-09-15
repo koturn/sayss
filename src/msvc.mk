@@ -1,7 +1,7 @@
 ### This Makefile was written for nmake. ###
 CC       = cl
 CPP      = cl
-INCS     = /Iheader
+INCS     = /Ilibrary
 CFLAGS   = /O2 /Wall $(INCS)
 CPPFLAGS = /O2 /Wall $(INCS)
 LDFLAGS  = /O2
