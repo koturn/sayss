@@ -1,3 +1,4 @@
+src/cygwin.mk
 src/*.exe
 src/*.o
 src/*.obj

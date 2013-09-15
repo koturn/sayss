@@ -3,29 +3,49 @@
  * @author  Koji Ueta
  * @date    2013 09/13
  * @file    sayss.cpp
- * @version 0.2
+ * @version 0.3
  */
 // C++の標準ライブラリ
 #include <cstring>
 #include <fstream>
+#include <getopt.h>
 #include <iostream>
 #include <string>
+#include <sstream>
 // インクルードパスに追加する必要のあるライブラリ
 #include <clx/http.h>
 #include <clx/uri.h>
 #include <clx/base64.h>
 #include <picojson/picojson.h>
 
+// attributeの指定が使えない処理系では、attributeを消す
+#ifndef __GNUC__
+#  define __attribute__(attr)
+#endif
+
+
+static int parseArguments(
+    int          argc,
+    char        *argv[],
+    std::string &lang,
+    std::string &filename);
+
+__attribute__((noreturn))
+static void showUsage(const char *progname, int exit_status);
+
+static inline std::string removeSuffix(const std::string &filename);
 
 static void sayTextToSpeach(
     const std::string &lang,
     const std::string &message,
     const std::string &filename);
+
 static std::string postToServer(
     const std::string &json_str,
     const std::string &url_host,
     const std::string &url_path,
     int port);
+
 static std::string retJsonToWave(const std::string &ret_json);
 
 
@@ -61,21 +81,32 @@ static const std::string JSON_FOOTER =
  */
 int main(int argc, char* argv[])
 {
-  if (argc < 2 || 4 < argc) {  // 引数の数のチェック
-    std::cerr << "Invalid argument" << std::endl
-              << "[Usage]" << std::endl
-              << "  $" << argv[0] << " [message] {[language] {[Output filename]}}"
-              << std::endl;
-    return EXIT_FAILURE;
-  }
   std::string lang     = DEFAULT_LANG;
   std::string filename = DEFAULT_OUTPUT_FILENAME;
-  std::string message  = argv[1];
-  if (argc > 2) lang     = argv[2];
-  if (argc > 3) filename = argv[3];
+  int remidx = parseArguments(argc, argv, lang, filename);
+  if (argc == remidx) {  // 引数の数のチェック
+    std::cerr << "Invalid argument" << std::endl;
+    showUsage(argv[0], EXIT_FAILURE);
+  }
 
   try {
-    sayTextToSpeach(lang, message, filename);
+    if (argc == optind + 1) {
+      std::string message = argv[remidx];
+      sayTextToSpeach(lang, message, filename);
+    } else {  // TODO: unstable
+      std::string base_filename = removeSuffix(filename);
+      std::stringstream ss;
+      for (int i = remidx, fileidx = 1; i < argc; i++, fileidx++) {
+        std::string message = argv[i];
+        ss << i;
+        std::string i_filename = base_filename + "-" + ss.str() + ".wav";
+
+        ss.str("");
+        ss.clear(std::stringstream::goodbit);
+
+        sayTextToSpeach(lang, message, i_filename);
+      }
+    }
   } catch (clx::socket_error& e) {
     std::cerr << e.what() << std::endl;
     return EXIT_FAILURE;
@@ -86,6 +117,89 @@ int main(int argc, char* argv[])
 }
 
 
+/*!
+ * @brief コマンドライン引数の解析を行う
+ *
+ * 引数argvのうち、オプションに関係しないものは、後ろに並び替えられる。
+ * その開始インデックスを返り値とする
+ * @param [in]     argc      コマンドライン引数の数
+ * @param [in,out] argv      コマンドライン引数
+ * @param [out]    lang      音声合成の言語
+ * @param [out]    filename  出力ファイル名
+ * @return  残った引数のインデックス
+ */
+static int parseArguments(
+    int          argc,
+    char        *argv[],
+    std::string &lang,
+    std::string &filename)
+{
+  static const struct option opts[] = {
+    {"help",     no_argument,       NULL, 'h'},
+    {"language", required_argument, NULL, 'l'},
+    {"output",   required_argument, NULL, 'o'},
+    {0, 0, 0, 0}   // must be filled with zero
+  };
+
+  int ret;
+  int optidx;
+  while ((ret = getopt_long(argc, argv, "hl:o:", opts, &optidx)) != -1) {
+    switch (ret) {
+      case 'h':
+        showUsage(argv[0], EXIT_SUCCESS);
+        break;
+      case 'l':
+        lang = optarg;
+        break;
+      case 'o':
+        filename = optarg;
+        break;
+    }
+  }
+  return optind;
+}
+
+
+/*!
+ * @brief 使い方を表示し、プログラムを終了する
+ * @attention この関数は呼び出し元に戻らないので、g++/clangではnoreturn属性を付加した
+ * @param [in] progname     プログラム名
+ * @param [in] exit_status  終了ステータス
+ */
+static void showUsage(const char *progname, int exit_status)
+{
+  std::cout << "[Usage]" << std::endl
+            << "  $ " << progname << " text {options}" << std::endl
+            << std::endl
+            << "[options]" << std::endl
+            << "  -h, --help" << std::endl
+            << "    Show usage of this program" << std::endl
+            << "  -l [text-language], --language [text-language]" << std::endl
+            << "    Specify language of text" << std::endl
+            << "  -o [output-filename], --output [output-filename]" << std::endl
+            << "    Specify filename of wave file" << std::endl;
+  exit(exit_status);
+}
+
+
+/*!
+ * @brief ファイル名の拡張子を覗いた部分を返す
+ * @param [in] filename  ファイル名
+ * @return  ファイル名の拡張子を覗いた部分
+ */
+static inline std::string removeSuffix(const std::string &filename)
+{
+  int idx = filename.find_last_of(".");
+  return filename.substr(0, idx);
+}
+
+
+/*!
+ * @brief 音声合成を行う
+ * @param [in] lang      messageの言語
+ * @param [in] argv      音声合成するテキスト
+ * @param [in] filename  出力ファイル名
+ */
 static void sayTextToSpeach(
     const std::string &lang,
     const std::string &message,
