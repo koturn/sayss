@@ -45,7 +45,7 @@ static const std::string JSON_HEADER =
   "   \"";
 //! 送信するJSON文字列の末尾
 static const std::string JSON_FOOTER =
-  ","
+  "\","
   "   \"*\","
   "   \"audio/x-wav\""
   " ],"
@@ -92,7 +92,8 @@ static void sayTextToSpeach(
     const std::string &filename)
 {
   // サーバに投げるJSON文字列の作成
-  std::string json_str = JSON_HEADER + lang + "\"," + message + JSON_FOOTER;
+  std::string json_str = JSON_HEADER + lang + "\", \"" + message + JSON_FOOTER;
+  std::cout << json_str << std::endl;
   // 例外はmain側に投げる
   std::string body_str = postToServer(json_str, URL_HOST, URL_PATH, HTTP_PORT);
 
