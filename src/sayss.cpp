@@ -17,6 +17,10 @@
 #include <picojson/picojson.h>
 
 
+static void sayTextToSpeach(
+    const std::string &lang,
+    const std::string &message,
+    const std::string &filename);
 static std::string postToServer(
     const std::string &json_str,
     const std::string &url_host,
@@ -31,12 +35,14 @@ static const int HTTP_PORT = 80;
 static const std::string URL_HOST = "rospeex.ucri.jgn-x.jp";
 //! サーバのパス部分
 static const std::string URL_PATH = "/nauth_json/jsServices/VoiceTraSS";
-//! 出力ファイル名
-static const std::string OUTPUT_FILENAME = "out.wav";
+//! デフォルトの入力言語
+static const std::string DEFAULT_LANG = "ja";
+//! デフォルトの出力ファイル名
+static const std::string DEFAULT_OUTPUT_FILENAME = "out.wav";
 //! 送信するJSON文字列の先頭部分
 static const std::string JSON_HEADER =
   "{\"params\" : ["
-  "   \"ja\",";
+  "   \"";
 //! 送信するJSON文字列の末尾
 static const std::string JSON_FOOTER =
   ","
@@ -55,31 +61,49 @@ static const std::string JSON_FOOTER =
  */
 int main(int argc, char* argv[])
 {
-  if (argc != 2) {  // 引数の数のチェック
+  if (argc < 2 || 4 < argc) {  // 引数の数のチェック
     std::cerr << "Invalid argument" << std::endl
               << "[Usage]" << std::endl
-              << "  $" << argv[0] << " [Japanese text]" << std::endl;
+              << "  $" << argv[0] << " [message] {[language] {[Output filename]}}"
+              << std::endl;
     return EXIT_FAILURE;
   }
+  std::string lang     = DEFAULT_LANG;
+  std::string filename = DEFAULT_OUTPUT_FILENAME;
+  std::string message  = argv[1];
+  if (argc > 2) lang     = argv[2];
+  if (argc > 3) filename = argv[3];
 
-  // サーバに投げるJSON文字列の作成
-  std::string json_str = JSON_HEADER + argv[1] + JSON_FOOTER;
   try {
-    std::string body_str = postToServer(json_str, URL_HOST, URL_PATH, HTTP_PORT);
-
-    std::ofstream ofs(OUTPUT_FILENAME.c_str(), std::ofstream::binary);
-    if (!ofs) {
-      std::cerr << "Cannot open " << OUTPUT_FILENAME << std::endl;
-      return EXIT_FAILURE;
-    }
-    ofs << retJsonToWave(body_str);
-    ofs.close();
+    sayTextToSpeach(lang, message, filename);
   } catch (clx::socket_error& e) {
     std::cerr << e.what() << std::endl;
     return EXIT_FAILURE;
+  } catch (const char *errmsg) {
+    std::cerr << errmsg << std::endl;
   }
   return EXIT_SUCCESS;
 }
+
+
+static void sayTextToSpeach(
+    const std::string &lang,
+    const std::string &message,
+    const std::string &filename)
+{
+  // サーバに投げるJSON文字列の作成
+  std::string json_str = JSON_HEADER + lang + "\"," + message + JSON_FOOTER;
+  // 例外はmain側に投げる
+  std::string body_str = postToServer(json_str, URL_HOST, URL_PATH, HTTP_PORT);
+
+  std::ofstream ofs(filename.c_str(), std::ofstream::binary);
+  if (!ofs) {
+    throw "Cannot open " + filename;
+  }
+  ofs << retJsonToWave(body_str);
+  ofs.close();
+}
+
 
 
 /*!
