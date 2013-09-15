@@ -96,9 +96,9 @@ int main(int argc, char* argv[])
     } else {  // TODO: unstable
       std::string base_filename = removeSuffix(filename);
       std::stringstream ss;
-      for (int i = remidx, fileidx = 1; i < argc; i++, fileidx++) {
+      for (int i = remidx, file_idx = 1; i < argc; i++, file_idx++) {
         std::string message = argv[i];
-        ss << i;
+        ss << file_idx;
         std::string i_filename = base_filename + "-" + ss.str() + ".wav";
 
         ss.str("");
