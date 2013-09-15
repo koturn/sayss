@@ -1,7 +1,9 @@
+*.exe
+*.o
+*.obj
+*.out
+*.stackdump
+*.wav
+*~
+tags
 src/cygwin.mk
-src/*.exe
-src/*.o
-src/*.obj
-src/*.out
-src/tags
-src/*.wav
