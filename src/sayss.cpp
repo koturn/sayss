@@ -31,7 +31,7 @@ static int parseArguments(
     std::string &filename);
 
 __attribute__((noreturn))
-static void showUsage(const char *progname, int exit_status);
+static inline void showUsage(const char *progname, int exit_status);
 
 static inline std::string removeSuffix(const std::string &filename);
 
@@ -44,7 +44,7 @@ static std::string postToServer(
     const std::string &json_str,
     const std::string &url_host,
     const std::string &url_path,
-    int port);
+    int                port);
 
 static std::string retJsonToWave(const std::string &ret_json);
 
@@ -61,16 +61,17 @@ static const std::string DEFAULT_LANG = "ja";
 static const std::string DEFAULT_OUTPUT_FILENAME = "out.wav";
 //! 送信するJSON文字列の先頭部分
 static const std::string JSON_HEADER =
-  "{\"params\" : ["
-  "   \"";
+"{"
+  "\"params\" : ["
+    "\"";
 //! 送信するJSON文字列の末尾
 static const std::string JSON_FOOTER =
-  "\","
-  "   \"*\","
-  "   \"audio/x-wav\""
-  " ],"
-  " \"method\" : \"speak\""
-  "}";
+    "\","
+    "\"*\","
+    "\"audio/x-wav\""
+  "],"
+  "\"method\" : \"speak\""
+"}";
 
 
 /*!
@@ -84,13 +85,13 @@ int main(int argc, char* argv[])
   std::string lang     = DEFAULT_LANG;
   std::string filename = DEFAULT_OUTPUT_FILENAME;
   int remidx = parseArguments(argc, argv, lang, filename);
-  if (argc == remidx) {  // 引数の数のチェック
+  if (argc == remidx) {  // 引数のチェック
     std::cerr << "Invalid argument" << std::endl;
     showUsage(argv[0], EXIT_FAILURE);
   }
 
   try {
-    if (argc == optind + 1) {
+    if (argc == optind + 1) {  // 発話語句が1つなら
       std::string message = argv[remidx];
       sayTextToSpeach(lang, message, filename);
     } else {  // TODO: unstable
@@ -145,13 +146,13 @@ static int parseArguments(
   int optidx;
   while ((ret = getopt_long(argc, argv, "hl:o:", opts, &optidx)) != -1) {
     switch (ret) {
-      case 'h':
+      case 'h':  // -h or --help
         showUsage(argv[0], EXIT_SUCCESS);
         break;
-      case 'l':
+      case 'l':  // -l or --language
         lang = optarg;
         break;
-      case 'o':
+      case 'o':  // -o or --output
         filename = optarg;
         break;
     }
@@ -166,17 +167,19 @@ static int parseArguments(
  * @param [in] progname     プログラム名
  * @param [in] exit_status  終了ステータス
  */
-static void showUsage(const char *progname, int exit_status)
+static inline void showUsage(const char *progname, int exit_status)
 {
   std::cout << "[Usage]" << std::endl
-            << "  $ " << progname << " text {options}" << std::endl
+            << "  $ " << progname << " [text] {options}" << std::endl
             << std::endl
             << "[options]" << std::endl
             << "  -h, --help" << std::endl
             << "    Show usage of this program" << std::endl
             << "  -l [text-language], --language [text-language]" << std::endl
+            << "    DEFAULT VALUE: ja" << std::endl
             << "    Specify language of text" << std::endl
             << "  -o [output-filename], --output [output-filename]" << std::endl
+            << "    DEFAULT VALUE: out.wav" << std::endl
             << "    Specify filename of wave file" << std::endl;
   exit(exit_status);
 }
@@ -248,13 +251,13 @@ static std::string postToServer(
  */
 static std::string retJsonToWave(const std::string &ret_json)
 {
-  picojson::value  v;
+  picojson::value  pico_value;
   const char      *ret_json_cstr = ret_json.c_str();
   std::string      err;
-  picojson::parse(v, ret_json_cstr, ret_json_cstr + strlen(ret_json_cstr), &err);
+  picojson::parse(pico_value, ret_json_cstr, ret_json_cstr + strlen(ret_json_cstr), &err);
 
-  picojson::object& o = v.get<picojson::object>();                // JSON全体のオブジェクトを取得
-  picojson::object result = o["result"].get<picojson::object>();  // キー:resultに対応するサブのJSONを取得
-  std::string      audio  = result["audio"].get<std::string>();   // audio項目を取得
+  picojson::object &pico_obj = pico_value.get<picojson::object>();          // JSON全体のオブジェクトを取得
+  picojson::object  result   = pico_obj["result"].get<picojson::object>();  // キー:resultに対応するサブのJSONを取得
+  std::string       audio    = result["audio"].get<std::string>();          // audio項目を取得
   return clx::base64::decode(audio);  // base64をデコードし、Waveファイルのバイナリを取得(型はstringだが)
 }
