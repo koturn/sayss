@@ -17,6 +17,10 @@
 #include <clx/uri.h>
 #include <clx/base64.h>
 #include <picojson/picojson.h>
+// 自作ユーティリティ
+#ifdef _MSC_VER
+#  include "charcode.h"
+#endif
 
 // attributeの指定が使えない処理系では、attributeを消す
 #ifndef __GNUC__
@@ -92,13 +96,21 @@ int main(int argc, char* argv[])
 
   try {
     if (argc == optind + 1) {  // 発話語句が1つなら
+#ifdef _MSC_VER
+      std::string message = sjisToUtf8(argv[remidx]);
+#else
       std::string message = argv[remidx];
+#endif
       sayTextToSpeach(lang, message, filename);
     } else {  // TODO: unstable
       std::string base_filename = removeSuffix(filename);
       std::stringstream ss;
       for (int i = remidx, file_idx = 1; i < argc; i++, file_idx++) {
+#ifdef _MSC_VER
+        std::string message = sjisToUtf8(argv[i]);
+#else
         std::string message = argv[i];
+#endif
         ss << file_idx;
         std::string i_filename = base_filename + "-" + ss.str() + ".wav";
 
@@ -108,7 +120,7 @@ int main(int argc, char* argv[])
         sayTextToSpeach(lang, message, i_filename);
       }
     }
-  } catch (clx::socket_error& e) {
+  } catch (clx::socket_error &e) {
     std::cerr << e.what() << std::endl;
     return EXIT_FAILURE;
   } catch (const char *errmsg) {
@@ -175,10 +187,10 @@ static inline void showUsage(const char *progname, int exit_status)
             << "[options]" << std::endl
             << "  -h, --help" << std::endl
             << "    Show usage of this program" << std::endl
-            << "  -l [text-language], --language [text-language]" << std::endl
+            << "  -l [text-language], --language=[text-language]" << std::endl
             << "    DEFAULT VALUE: ja" << std::endl
             << "    Specify language of text" << std::endl
-            << "  -o [output-filename], --output [output-filename]" << std::endl
+            << "  -o [output-filename], --output=[output-filename]" << std::endl
             << "    DEFAULT VALUE: out.wav" << std::endl
             << "    Specify filename of wave file" << std::endl;
   exit(exit_status);
@@ -210,7 +222,6 @@ static void sayTextToSpeach(
 {
   // サーバに投げるJSON文字列の作成
   std::string json_str = JSON_HEADER + lang + "\", \"" + message + JSON_FOOTER;
-  std::cout << json_str << std::endl;
   // 例外はmain側に投げる
   std::string body_str = postToServer(json_str, URL_HOST, URL_PATH, HTTP_PORT);
 

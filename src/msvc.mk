@@ -10,26 +10,31 @@ RM         = del /F
 GETOPT_DIR = library\getopt
 TARGET     = sayss.exe
 OBJ1       = $(TARGET:.exe=.obj)
-OBJ2       = $(GETOPT_DIR)\getopt.obj
-OBJ3       = $(GETOPT_DIR)\getopt_long.obj
-SRC1       = $(TARGET:.exe=.cpp)
+OBJ2       = charcode.obj
+OBJ3       = $(GETOPT_DIR)\getopt.obj
+OBJ4       = $(GETOPT_DIR)\getopt_long.obj
+SRC1       = $(OBJ1:.obj=.cpp)
+SRC2       = $(OBJ2:.obj=.cpp)
+HEADER2    = $(OBJ2:.obj=.h)
 
 
 all : $(TARGET)
 
-$(TARGET) : $(OBJ1) $(OBJ2) $(OBJ3)
+$(TARGET) : $(OBJ1) $(OBJ2) $(OBJ3) $(OBJ4)
 	$(CPP) $(LDFLAGS) $**
 
-$(OBJ1) : $(SRC1)
+$(OBJ1) : $(SRC1) $(HEADER2)
 
-$(OBJ2) $(OBJ3) :
+$(OBJ2) : $(SRC2) $(HEADER2)
+
+$(OBJ3) $(OBJ4) :
 	cd $(GETOPT_DIR)  &&  $(MAKE) /f msvc.mk  &&  cd ..\..
 
 
 allclean :
-	$(RM) $(TARGET) $(OBJ1) *.wav *.stackdump *~
+	$(RM) $(TARGET) $(OBJ1) $(OBJ2) *.exp *.lib *.wav *.stackdump *~
 clean :
-	$(RM) $(TARGET) $(OBJ1)
+	$(RM) $(TARGET) $(OBJ1) $(OBJ2) *.exp *.lib
 	cd $(GETOPT_DIR)  &&  $(MAKE) /f msvc.mk $@  &&  cd ..\..
 objclean :
-	$(RM) $(OBJ1)
+	$(RM) $(OBJ1) $(OBJ2)
