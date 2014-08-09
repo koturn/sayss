@@ -18,23 +18,29 @@ SRC2       = $(OBJ2:.obj=.cpp)
 HEADER2    = $(OBJ2:.obj=.h)
 
 
-all : $(TARGET)
+all: $(TARGET)
 
-$(TARGET) : $(OBJ1) $(OBJ2) $(OBJ3) $(OBJ4)
+$(TARGET): $(OBJ1) $(OBJ2) $(OBJ3) $(OBJ4)
 	$(CPP) $(LDFLAGS) $**
 
-$(OBJ1) : $(SRC1) $(HEADER2)
+$(OBJ1): $(SRC1) $(HEADER2)
 
-$(OBJ2) : $(SRC2) $(HEADER2)
+$(OBJ2): $(SRC2) $(HEADER2)
 
-$(OBJ3) $(OBJ4) :
+$(OBJ3) $(OBJ4):
 	cd $(GETOPT_DIR)  &&  $(MAKE) /f msvc.mk  &&  cd ..\..
 
 
-allclean :
+test:
+	./$(TARGET) --help
+	./$(TARGET) こんにちは
+	./$(TARGET) -l en -o hello.wav "Hello world"
+
+
+allclean:
 	$(RM) $(TARGET) $(OBJ1) $(OBJ2) *.exp *.lib *.wav *.stackdump *~
-clean :
+clean:
 	$(RM) $(TARGET) $(OBJ1) $(OBJ2) *.exp *.lib
 	cd $(GETOPT_DIR)  &&  $(MAKE) /f msvc.mk $@  &&  cd ..\..
-objclean :
+cleanobj:
 	$(RM) $(OBJ1) $(OBJ2)
