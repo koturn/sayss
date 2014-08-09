@@ -1,18 +1,16 @@
 ### This Makefile was written for GNU Make. ###
-CC       = g++
-CXX      = g++
-INCS     = -I./library
-CFLAGS   = -pipe -Wall -Wextra $(COPTFLAGS)   $(INCS) $(if $(STD), $(addprefix -std=, $(STD)),)
-CXXFLAGS = -pipe -Wall -Wextra $(CXXOPTFLAGS) $(INCS) $(if $(STD), $(addprefix -std=, $(STD)),)
-LDFLAGS  = -pipe $(LDOPTFLAGS)
-TARGET   = sayss
-OBJ      = $(addsuffix .o, $(basename $(TARGET)))
+CC       ?= g++
+CXX      ?= g++
+INCS      = -I./library
+CFLAGS    = -pipe -Wall -Wextra $(COPTFLAGS)   $(INCS) $(if $(STD), $(addprefix -std=, $(STD)),)
+CXXFLAGS  = -pipe -Wall -Wextra $(CXXOPTFLAGS) $(INCS) $(if $(STD), $(addprefix -std=, $(STD)),)
+LDFLAGS   = -pipe $(LDOPTFLAGS)
+TARGET    = sayss
+OBJ       = $(addsuffix .o, $(basename $(TARGET)))
 
 
 ifeq ($(OS),Windows_NT)
     TARGET   := $(addsuffix .exe, $(TARGET))
-    # CFLAGS   += -finput-charset=utf-8 -fexec-charset=cp932
-    # CXXFLAGS += -finput-charset=utf-8 -fexec-charset=cp932
 else
     TARGET := $(addsuffix .out, $(TARGET))
 endif
