@@ -37,24 +37,31 @@ ifeq ($(DEBUG),true)
     CXXOPTFLAGS  = -O0 -g
 endif
 
-%.exe :
+%.exe:
 	$(CXX) $(LDFLAGS) $(filter %.c %.cpp %.o, $^) $(LDLIBS) -o $@
-%.out :
+%.out:
 	$(CXX) $(LDFLAGS) $(filter %.c %.cpp %.o, $^) $(LDLIBS) -o $@
 
 
-.PHONY : all
-all : $(TARGET)
+.PHONY: all
+all: $(TARGET)
 
-$(TARGET) : $(OBJ)
+$(TARGET): $(OBJ)
 
 
-.PHONY : allclean
-allclean :
+.PHONY: test
+test:
+	./$(TARGET) --help
+	./$(TARGET) こんにちは
+	./$(TARGET) -l en -o hello.wav "Hello world"
+
+
+.PHONY: allclean
+allclean:
 	$(RM) $(TARGET) $(OBJ) *.wav *.stackdump *~
-.PHONY : clean
-clean :
+.PHONY: clean
+clean:
 	$(RM) $(TARGET) $(OBJ)
-.PHONY : objclean
-objclean :
+.PHONY: cleanobj
+objclean:
 	$(RM) $(OBJ)
